@@ -1,17 +1,13 @@
 package whatsapp
 
 import (
-	"github.com/Rhymen/go-whatsapp/binary"
-	"github.com/Rhymen/go-whatsapp/binary/proto"
 	"log"
 	"strconv"
 	"time"
-)
 
-type MessageOffsetInfo struct {
-	FirstMessageId    string
-	FirstMessageOwner bool
-}
+	"github.com/Rhymen/go-whatsapp/binary"
+	"github.com/Rhymen/go-whatsapp/binary/proto"
+)
 
 func decodeMessages(n *binary.Node) []*proto.WebMessageInfo {
 
@@ -37,7 +33,7 @@ func decodeMessages(n *binary.Node) []*proto.WebMessageInfo {
 // if handlers == nil the func will use default handlers
 // if after == true LoadChatMessages will load messages after the specified messageId, otherwise it will return
 // message before the messageId
-func (wac *Conn) LoadChatMessages(jid string, count int, messageId string, owner bool, after bool, handlers ...Handler) error {
+func (wac *Conn) LoadChatMessages(jid string, count int, messageID string, owner bool, after bool, handlers ...Handler) error {
 	if count <= 0 {
 		return nil
 	}
@@ -51,7 +47,7 @@ func (wac *Conn) LoadChatMessages(jid string, count int, messageId string, owner
 		kind = "after"
 	}
 
-	node, err := wac.query("message", jid, messageId, kind,
+	node, err := wac.query("message", jid, messageID, kind,
 		strconv.FormatBool(owner), "", count, 0)
 
 	if err != nil {
@@ -113,7 +109,7 @@ func (wac *Conn) LoadFullChatHistory(jid string, chunkSize int,
 
 // LoadFullChatHistoryAfter loads all messages after the specified messageId
 // useful to "catch up" with the message history after some specified message
-func (wac *Conn) LoadFullChatHistoryAfter(jid string, messageId string, chunkSize int,
+func (wac *Conn) LoadFullChatHistoryAfter(jid string, messageID string, chunkSize int,
 	pauseBetweenQueries time.Duration, handlers ...Handler) {
 
 	if chunkSize <= 0 {
@@ -128,7 +124,7 @@ func (wac *Conn) LoadFullChatHistoryAfter(jid string, messageId string, chunkSiz
 	prevNotFound := false
 
 	for {
-		node, err := wac.query("message", jid, messageId, "after",
+		node, err := wac.query("message", jid, messageID, "after",
 			strconv.FormatBool(msgOwner), "", chunkSize, 0)
 
 		if err != nil {
@@ -169,7 +165,7 @@ func (wac *Conn) LoadFullChatHistoryAfter(jid string, messageId string, chunkSiz
 				break
 			}
 
-			messageId = *msgs[0].Key.Id
+			messageID = *msgs[0].Key.Id
 			msgOwner = msgs[0].Key.FromMe != nil && *msgs[0].Key.FromMe
 		}
 
