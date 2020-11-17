@@ -40,7 +40,7 @@ const (
 	spam
 	querySearch
 	queryIdentity
-	queryUrl
+	queryURL
 	profile
 	contact
 	queryVcard
@@ -112,24 +112,14 @@ type listenerWrapper struct {
 }
 
 /*
-Creates a new connection with a given timeout. The websocket connection to the WhatsAppWeb servers get´s established.
+NewConn creates a new connection with a given timeout. The websocket connection to the WhatsAppWeb servers get´s established.
 The goroutine for handling incoming messages is started
 */
 func NewConn(timeout time.Duration) (*Conn, error) {
-	wac := &Conn{
-		handler:    make([]Handler, 0),
-		msgCount:   0,
-		msgTimeout: timeout,
-		Store:      newStore(),
-
-		longClientName:  "github.com/rhymen/go-whatsapp",
-		shortClientName: "go-whatsapp",
-		clientVersion:   "0.1.0",
-	}
-	return wac, wac.connect()
+	return NewConnWithProxy(timeout, nil)
 }
 
-// NewConnWithProxy Create a new connect with a given timeout and a http proxy.
+// NewConnWithProxy create a new connection with a given timeout and a http proxy.
 func NewConnWithProxy(timeout time.Duration, proxy func(*http.Request) (*url.URL, error)) (*Conn, error) {
 	wac := &Conn{
 		handler:    make([]Handler, 0),
@@ -199,6 +189,7 @@ func (wac *Conn) connect() (err error) {
 	return nil
 }
 
+//Disconnect closes the connection gracefully and returns the last valid session state.
 func (wac *Conn) Disconnect() (Session, error) {
 	if !wac.connected {
 		return Session{}, ErrNotConnected
@@ -218,6 +209,7 @@ func (wac *Conn) Disconnect() (Session, error) {
 	return *wac.session, err
 }
 
+//AdminTest provides the functionality to test if the connection is still healthy
 func (wac *Conn) AdminTest() (bool, error) {
 	if !wac.connected {
 		return false, ErrNotConnected
@@ -249,10 +241,12 @@ func (wac *Conn) keepAlive(minIntervalMs int, maxIntervalMs int) {
 	}
 }
 
+//GetConnected returns whether the server connection is established or not
 func (wac *Conn) GetConnected() bool {
-	return  wac.connected
+	return wac.connected
 }
 
+//GetLoggedIn returns whether the you are logged in or not
 func (wac *Conn) GetLoggedIn() bool {
-	return  wac.loggedIn
+	return wac.loggedIn
 }
