@@ -12,7 +12,6 @@ import (
 	"github.com/Rhymen/go-whatsapp/binary"
 	"github.com/Rhymen/go-whatsapp/crypto/cbc"
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
 )
 
 func (wac *Conn) readPump() {
@@ -41,12 +40,12 @@ func (wac *Conn) readPump() {
 			}
 			msg, err := ioutil.ReadAll(reader)
 			if err != nil {
-				wac.handle(errors.Wrap(err, "error reading message from Reader"))
+				wac.handle(fmt.Errorf("error reading message from Reader: %w", err))
 				continue
 			}
 			err = wac.processReadData(msgType, msg)
 			if err != nil {
-				wac.handle(errors.Wrap(err, "error processing data"))
+				wac.handle(fmt.Errorf("error processing data: %w", err))
 			}
 		case <-wac.ws.close:
 			return
@@ -95,7 +94,7 @@ func (wac *Conn) processReadData(msgType int, msg []byte) error {
 		}
 		message, err := wac.decryptBinaryMessage([]byte(data[1]))
 		if err != nil {
-			return errors.Wrap(err, "error decoding binary")
+			return fmt.Errorf("error decoding binary: %w", err)
 		}
 		wac.dispatch(message)
 	} else { //RAW json status updates
@@ -116,12 +115,11 @@ func (wac *Conn) decryptBinaryMessage(msg []byte) (*binary.Node, error) {
 			if response.Status == 404 {
 				return nil, ErrServerRespondedWith404
 			}
-			return nil, errors.New(fmt.Sprintf("server responded with %d", response.Status))
-		} else {
-			return nil, ErrInvalidServerResponse
+			return nil, fmt.Errorf("server responded with %d", response.Status)
 		}
-
+		return nil, ErrInvalidServerResponse
 	}
+
 	h2.Write([]byte(msg[32:]))
 	if !hmac.Equal(h2.Sum(nil), msg[:32]) {
 		return nil, ErrInvalidHmac
@@ -130,13 +128,13 @@ func (wac *Conn) decryptBinaryMessage(msg []byte) (*binary.Node, error) {
 	// message decrypt
 	d, err := cbc.Decrypt(wac.session.EncKey, nil, msg[32:])
 	if err != nil {
-		return nil, errors.Wrap(err, "decrypting message with AES-CBC failed")
+		return nil, fmt.Errorf("decrypting message with AES-CBC failed: %w", err)
 	}
 
 	// message unmarshal
 	message, err := binary.Unmarshal(d)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not decode binary")
+		return nil, fmt.Errorf("could not decode binary: %w", err)
 	}
 
 	return message, nil
